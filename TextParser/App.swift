@@ -5,14 +5,18 @@
 //  Created by Dominik de Jesus Moreira on 29.03.26.
 //
 
+import ArgumentParser
 import Foundation
 import NaturalLanguage
 
 @main
-struct App {
-    static func main() {
+struct App: ParsableCommand {
+    @Argument(help: "The text you want to analyze")
+    var input: [String]
+    
+    mutating func run() {
         print()
-        let text = CommandLine.arguments.dropFirst().joined(separator: " ")
+        let text = input.joined(separator: " ")
         let language =
             NLLanguageRecognizer.dominantLanguage(for: text) ?? .undetermined
         print()
@@ -37,7 +41,7 @@ struct App {
         }
     }
 
-    static func sentiment(for string: String) -> Double {
+    func sentiment(for string: String) -> Double {
         let tagger = NLTagger(tagSchemes: [.sentimentScore])
         tagger.string = string
 
@@ -50,7 +54,7 @@ struct App {
         return Double(sentiment?.rawValue ?? "0") ?? 0
     }
 
-    static func embeddings(for word: String) -> [String] {
+    func embeddings(for word: String) -> [String] {
         var results = [String]()
 
         if let embedding = NLEmbedding.wordEmbedding(for: .english) {
@@ -64,7 +68,7 @@ struct App {
         return results
     }
 
-    static func lemmatize(string: String) -> [String] {
+    func lemmatize(string: String) -> [String] {
         let tagger = NLTagger(tagSchemes: [.lemma])
         tagger.string = string
 
@@ -91,7 +95,7 @@ struct App {
         return results
     }
 
-    static func entities(for string: String) -> [String] {
+    func entities(for string: String) -> [String] {
         let tagger = NLTagger(tagSchemes: [.nameType])
         tagger.string = string
         var results = [String]()
