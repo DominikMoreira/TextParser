@@ -49,17 +49,31 @@ struct App: ParsableCommand {
     )
     var names = false
 
+    @Flag(help: "Detect person names.")
+    var person = false
+
+    @Flag(help: "Detect place names.")
+    var place = false
+
+    @Flag(help: "Detect organization names.")
+    var organization = false
+
     @Option(help: "The maximum number of alternatives to suggest.")
     var maximumAlternatives = 10
 
     mutating func run() {
         if detectLanguage == false && sentimentAnalysis == false
             && lemmatize == false && alternatives == false && names == false
+            && person == false && place == false && organization == false
         {
             detectLanguage = true
             sentimentAnalysis = true
             lemmatize = true
             alternatives = true
+            names = true
+        }
+
+        if person || place || organization {
             names = true
         }
 
@@ -97,7 +111,12 @@ struct App: ParsableCommand {
         }
 
         if names {
-            let entities = entities(for: text)
+            let entities = entities(
+                for: text,
+                includePersons: person,
+                includePlaces: place,
+                includeOrganizations: organization
+            )
             print()
             print("Found the following entities:")
             for entity in entities {
@@ -163,18 +182,48 @@ struct App: ParsableCommand {
         return results
     }
 
-    func entities(for string: String) -> [String] {
+    func entities(
+        for string: String,
+        includePersons: Bool,
+        includePlaces: Bool,
+        includeOrganizations: Bool
+    ) -> [String] {
         let tagger = NLTagger(tagSchemes: [.nameType])
         tagger.string = string
+
+        let hasExplicitSelection =
+            includePersons || includePlaces || includeOrganizations
+
+        let allowedTags: Set<NLTag>
+        if hasExplicitSelection {
+            var tags = Set<NLTag>()
+
+            if includePersons {
+                tags.insert(.personalName)
+            }
+            if includePlaces {
+                tags.insert(.placeName)
+            }
+            if includeOrganizations {
+                tags.insert(.organizationName)
+            }
+
+            allowedTags = tags
+        } else {
+            allowedTags = [.personalName, .placeName, .organizationName]
+        }
+
         var results = [String]()
 
         tagger.enumerateTags(
             in: string.startIndex..<string.endIndex,
             unit: .word,
             scheme: .nameType,
-            options: .joinNames
+            options: [.joinNames, .omitWhitespace, .omitPunctuation]
         ) { tag, range in
-            guard let tag = tag else { return true }
+            guard let tag = tag, allowedTags.contains(tag) else {
+                return true
+            }
 
             let match = String(string[range])
 
@@ -188,8 +237,10 @@ struct App: ParsableCommand {
             default:
                 break
             }
+
             return true
         }
+
         return results
     }
 }
