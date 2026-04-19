@@ -84,10 +84,10 @@ struct App: ParsableCommand {
         print()
         let text = input.joined(separator: " ")
 
+        let language =
+            NLLanguageRecognizer.dominantLanguage(for: text)
+            ?? .undetermined
         if detectLanguage {
-            let language =
-                NLLanguageRecognizer.dominantLanguage(for: text)
-                ?? .undetermined
             print()
             print("Detected Language: \(language.rawValue)")
         }
@@ -109,7 +109,7 @@ struct App: ParsableCommand {
             print("Found the following alternatives:")
 
             for word in lemma {
-                let embeddings = embeddings(for: word)
+                let embeddings = embeddings(for: word, for: language)
                 print("\t\n\(word): ", embeddings.formatted(.list(type: .and)))
             }
         }
@@ -142,10 +142,10 @@ struct App: ParsableCommand {
         return Double(sentiment?.rawValue ?? "0") ?? 0
     }
 
-    func embeddings(for word: String) -> [String] {
+    func embeddings(for word: String, for language: NLLanguage) -> [String] {
         var results = [String]()
 
-        if let embedding = NLEmbedding.wordEmbedding(for: .english) {
+        if let embedding = NLEmbedding.wordEmbedding(for: language) {
             let similarWords = embedding.neighbors(
                 for: word,
                 maximumCount: maximumAlternatives
