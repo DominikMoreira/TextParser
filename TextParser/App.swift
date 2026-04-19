@@ -21,6 +21,9 @@ struct App: ParsableCommand {
 
     @Argument(help: "The text you want to analyze")
     var input: [String]
+    
+    @Flag(name: .shortAndLong, help: "Run everything in one go.")
+    var everything = false
 
     @Flag(name: .shortAndLong, help: "Show detected language.")
     var detectLanguage = false
@@ -65,9 +68,7 @@ struct App: ParsableCommand {
     var minimumAlternativeDistance: Double = 0.4
 
     mutating func run() {
-        if detectLanguage == false && sentimentAnalysis == false
-            && lemmatize == false && alternatives == false && names == false
-            && person == false && place == false && organization == false
+        if everything
         {
             detectLanguage = true
             sentimentAnalysis = true
