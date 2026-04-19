@@ -60,6 +60,9 @@ struct App: ParsableCommand {
 
     @Option(help: "The maximum number of alternatives to suggest.")
     var maximumAlternatives = 10
+    
+    @Option(help: "Distance level of alternatives which should be shown.")
+    var minimumAlternativeDistance: Double = 0.4
 
     mutating func run() {
         if detectLanguage == false && sentimentAnalysis == false
@@ -106,7 +109,7 @@ struct App: ParsableCommand {
 
             for word in lemma {
                 let embeddings = embeddings(for: word)
-                print("\t\(word): ", embeddings.formatted(.list(type: .and)))
+                print("\t\n\(word): ", embeddings.formatted(.list(type: .and)))
             }
         }
 
@@ -148,7 +151,9 @@ struct App: ParsableCommand {
             )
 
             for word in similarWords {
-                results.append("\(word.0) has a distance of word \(word.1)")
+                if word.1 >= minimumAlternativeDistance {
+                    results.append("\(word.0) has a distance of word \(word.1)")
+                }
             }
         }
 
